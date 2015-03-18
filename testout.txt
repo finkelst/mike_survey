@@ -1,0 +1,1 @@
+['sox', '../files/leadIn.wav', '../files/7-AA.wav', '../files/3-EH.wav', '../files/0-IY.wav', '../files/fillIn.wav', '../files/10-UH.wav', '../files/3-EH.wav', '../files/11-UW.wav', '../stims/25-trialStim.wav']

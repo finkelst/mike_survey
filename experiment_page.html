@@ -1,0 +1,254 @@
+<html>
+	<head>
+		<title>Experiment</title>
+		<style>
+		#instructions {
+			outline-width: medium;
+			outline: azure;
+			background-color: burlywood;
+		}
+		#header {
+			background: #00467F;
+		}
+		</style>
+		<script src="jquery-1.11.1.min.js"></script>
+		<script type="text/javascript">
+		var user_number;
+		var vowels;
+		var test_case_number;
+		$(document).ready(function() {
+			$("#splash").show();
+			$("#survey").hide();
+		    $("#questions").hide();
+		    $("#begin").hide();
+			//returning user
+			$('#returning').on('click', 'input:submit', function(e) {
+				e.preventDefault();
+				user_number = $('#returning form input:text').val();
+				//ajax call to check number
+				$.ajax({
+		            url: "/cgi-bin/check_user.py",
+		            type: "GET",
+		            data: {
+		                id_number: user_number
+		            },
+		            dataType: "json",
+
+		            success: function(dat) {
+		                console.dir(dat);
+		                console.log(dat.valid_user);
+		                if (dat.valid_user) {
+		                	$("#splash").hide();
+		    				$("#begin").show();
+		                	$('#returning').empty();
+		                	$('#returning').prepend('Your user number: ' + user_number.toString());
+		                	$('#new_user').empty();
+	                		$('#returning').after('<button type="button" class="new_stimulus">Begin</button>');
+		                }
+		                else {
+		                	$('#returning').append('Invalid ID');
+		                }
+		            }
+		        });
+			});
+			//if click new user, give them a new number
+			$('#new_user').on('click', 'a', function(e) {
+				e.preventDefault();
+				console.log('test');
+				$.ajax({
+		            url: "/cgi-bin/check_user.py",
+		            type: "GET",
+		            dataType: "json",
+
+		            success: function(dat) {
+		                console.dir(dat);
+		                user_number = dat.id_number;
+		                $("#splash").hide();
+		    			$("#questions").hide();
+		    			$("#begin").hide();
+						$("#survey").show();
+	                	$('#returning').empty();
+	                	$('#new_user').empty();
+	                	
+	                	createSurvey();
+		            }
+		        });
+			});
+
+			$(document).on('click', '.new_stimulus', function(e) {
+				if ($(this).is('button')) {
+					$(this).hide();
+				}
+				$.ajax({
+					url: "/cgi-bin/process_data.py",
+					type: "POST",
+					data: {
+						id_number: user_number,
+						vowel_pattern: vowels,
+						test_case: test_case_number,
+						response: $('input:radio[name=agree_val]:checked').val()
+					},
+					dataType: "json",
+
+					success: function(dat) {
+						console.dir(dat);
+						vowels = dat.vowel_pattern;
+						console.log(vowels);
+						test_case_number = dat.test_case_number;
+						$("#splash").hide();
+		                $("#questions").show();
+		                $("#begin").hide();
+						$('#response').empty()
+						$('#stimulus').empty()
+						str = '<audio controls>';
+						str += '<source src="stims/' + user_number.toString() + '-trialStim.wav" type="audio/wav">';
+						str += '</audio>';
+						$('#stimulus').append(str);
+						createTable();
+					}
+				});	
+			});	
+			$(document).on('click', '.take_survey', function(e) {
+				if ($(this).is('button')) {
+					$(this).hide();
+				}
+				$.ajax({
+					url: "/cgi-bin/process_data.py",
+					type: "POST",
+					data: {
+						id_number: user_number,
+						test_case: test_case_number,
+						demo_response1: $('input:radio[name=test1_val]:checked').val(),
+						demo_response2: $('input:radio[name=test2_val]:checked').val(),
+						demo_response3: $('input:radio[name=test3_val]:checked').val()
+					},
+					dataType: "json",
+
+					success: function(dat) {
+		                console.dir(dat);
+						$(".survey_table").hide();
+						$("#survey").hide();
+		                $("#splash").hide();
+		    			$("#questions").hide();
+		    			$("#begin").show();
+		                $('#returning').empty();
+		                $('#returning').prepend('Your user number: ' + user_number.toString());
+		                $('#new_user').empty();
+	                	$('#returning').after('<button type="button" class="new_stimulus">Begin</button>');
+		                
+			        }
+				});	
+			});
+
+			//once the user stuff is done load up the audio file
+			//createTable();
+			// promise1.done(function() {
+			// 	$('#stimulus').append('<audio controls><source src="out.wav" type="audio/wav"></audio>');
+			// 	createTable();
+			// });
+
+			$('#response').on('click', 'table input:submit', function(e) {
+				console.log('hello');
+		        //send id, vowels, and response through ajax
+		        //receive back next stimulus
+		        //clear audio and bring in new audio
+		        //clear table
+    		});
+		});
+// 		changed names of top and bottom values
+		function createTable() {
+			var str = '<table>'
+			str += '<tr><td><input type="radio" name="agree_val" value="1">1 No Rhyme</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="2">2</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="3">3</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="4">4</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="5">5</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="6">6</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="7">7</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="8">8</td></tr>';
+			str += '<tr><td><input type="radio" name="agree_val" value="9">9 Perfect Rhyme</td></tr>';
+			str += '<tr><td><input type="submit" class="new_stimulus"></td></tr>'
+			str += '</table>'
+
+			$('#response').append(str);
+		}
+		function createSurvey() {
+			var str = '<h4 class="survey_table"> Background and Demographic Information Questionaire </h4>'
+			str += '<h5 class="survey_table"> <u>Please Indicate Your Highest Level of Educational Attainment: </u></h5>';
+			str += '<table class="survey_table">';
+			str += '<tr><td><input type="radio" name="test1_val" value="1"> Have not Finished High School</td></tr>';
+			str += '<tr><td><input type="radio" name="test1_val" value="2"> High School Diploma/GED</td></tr>';
+			str += '<tr><td><input type="radio" name="test1_val" value="3"> College Degree</td></tr>';
+			str += '<tr><td><input type="radio" name="test1_val" value="4"> Masters Degree</td></tr>';
+			str += '<tr><td><input type="radio" name="test1_val" value="5"> PhD or Equivalent</td></tr>';
+			str += '</table>'
+			str += '<h5 class="survey_table"> <u>Please Indicate Your Level of MUSICAL Education: </u></h5>';
+			str += '<table class="survey_table">'
+			str += '<tr><td><input type="radio" name="test2_val" value="1">No Music Training, Rarely Listen to Music</td></tr>';
+			str += '<tr><td><input type="radio" name="test2_val" value="2">Some Formal Training</td></tr>';
+			str += '<tr><td><input type="radio" name="test2_val" value="3">Some Formal Training; Listen to a Variety of Music</td></tr>';
+			str += '<tr><td><input type="radio" name="test2_val" value="4">Took a few Formal Classes in College</td></tr>';
+			str += '<tr><td><input type="radio" name="test2_val" value="5">Majored or Minored in Music in College</td></tr>';
+			str += '<tr><td><input type="radio" name="test2_val" value="6">Advanced Musical Degree</td></tr>';
+			str += '</table>'
+			str += '<h5 class="survey_table"> <u>Please Indicate Your Level of Rap/R&B Education: </u></h5>';
+			str += '<table class="survey_table">'
+			str += '<tr><td><input type="radio" name="test3_val" value="1">No Rap Coursework, Rarely Listen to Rap</td></tr>';
+			str += '<tr><td><input type="radio" name="test3_val" value="2">No Rap Coursework, Often Listen to Rap</td></tr>';
+			str += '<tr><td><input type="radio" name="test3_val" value="3">Experience Analysing Rap</td></tr>';
+			str += '<tr><td><input type="radio" name="test3_val" value="4">Rap God</td></tr>';
+			str += '<tr><td><input type="submit" class="take_survey"></td></tr>'
+			str += '</table>'
+
+			$('#response').append(str);
+		}
+		</script>
+	</head>
+
+	<body>
+		<div id ="header">
+			<a href="http://www.esm.rochester.edu/theory/" title="ESM Home" >
+				<img src="files/theory.png" width="960" height="120" alt=" Eastman School of Music">
+			</a>
+		</div>
+		<div id="instructions">
+			<div id ="splash"><h4>Hello and welcome to my survey! Thank you for volunteering to help me, Michael Blankenship, 
+			with my ongoing research in the Eastman Music Theory Department. This survey will take about 10 minutes, and will require
+			you to answer questions based on sounds--so make sure your computer's volume is turned up. Furthermore, there is no "end" of this survey,
+			so after you've answered all the questions you care to, please feel free to exit the survey by simply leaving or reloading the page. 
+			</br>
+			If you are a returning user, please enter your ID number below.  If you are a new user, clink the link to continue.
+			</h4>
+			</div>
+			<div id ="survey"><h4>Since this is your first time, we'd like to get some demographic information about you. 
+			Please fill out the following survey as best you can, and don't worry TOO much about being objective while 
+			you answer questions about your musical or rap education.			
+			</br>
+			When you are finished, please hit the "Submit" button at the bottom of the survey.
+			</h4>
+			</div>
+			<div id ="begin"><h4>Please note your user number for reference upon subsequent visits.
+			</br>
+			The survey is about to start! When you are ready, click "Begin."
+			</h4>
+			</div>
+			<div id ="questions"><h4>Each of these questions ask you to evaluate how well the first three vowel sounds (those BEFORE the interlude)
+			rhyme with the final three vowel sounds (those AFTER the interlude).
+			</br>
+			Please try to answer 15-20 questions before finishing your session. When you are finished, either leave the page, or refresh the page for the next user.
+			</h4>
+			</div>
+		</div>
+		<h2 id="id_number"></h2>
+		<h5 id="returning">Returning User:
+			<form>
+				<input type="text" placeholder="Enter ID number" />
+        		<input type="submit" value="OK" />
+        	</form>
+        </h5>
+        <h5 id="new_user">New User:<a href="#">Get ID number</a>
+        </h5>
+		<div id="stimulus"></div>
+		<div id="response"></div>
+	</body>
+</html>
