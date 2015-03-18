@@ -1,1 +1,1 @@
-{'test_case_number': 0, 'vowel_pattern': '7-AA.wav, 3-EH.wav, 0-IY.wav, 10-UH.wav, 3-EH.wav, 11-UW.wav'}
+{'test_case_number': 0, 'vowel_pattern': '7-AA.wav, 5-AE.wav, 9-OA.wav, 11-UW.wav, 5-AE.wav, 0-IY.wav'}
